@@ -1,7 +1,7 @@
 ### Loplot, a visible figure of signal correction loplot provide the visible figure of QC-based
 ### correction.  x The file before QC-based correction.  z The file after QC-based correction.  i
 ### The name of variable.  The plot of RSD distribution and data table.
-loplot <- function(x, z, i) {
+loplot_rfsc <- function(x, z, i) {
     # x is the Corrected Data
     cn <- colnames(x)
     qcid <- grep("QC", cn)
