@@ -40,7 +40,7 @@ loplot <- function(x, z, i) {
     graphics::layout(matrix(1:2, nrow = 2))
     
     numY <- 1:dim(x)[2]
-    graphics::plot(numY, x[i, ], pch = 19, col = "yellow", ylab = c("Intensity"), xlab = c("Injection Order"), 
+    graphics::plot(numY, x[i, ], pch = 19, col = "gold2", ylab = c("Intensity"), xlab = c("Injection Order"), 
         main = "Raw Peak")
     points(qcid, x[i, qcid], pch = 19, col = "blue")
     abline(h = cuttemRU, col = "#D55E00", lwd = 1.2, lty = 1)
@@ -52,12 +52,12 @@ loplot <- function(x, z, i) {
     mtext("+SD@15%CV", side = 4, line = 0.3, at = cuttemRUL, col = "#D55E00", cex = 0.3, las = 1)
     mtext("-SD@15%CV", side = 4, line = 0.3, at = cuttemRDL, col = "#D55E00", cex = 0.3, las = 1)
     
-    legend("top", c("Sample", "QC"), col = c("yellow", "blue"), lty = 1, pch = 19, bty = "n", cex = 0.75, 
+    legend("top", c("Sample", "QC"), col = c("gold2", "blue"), lty = 1, pch = 19, bty = "n", cex = 0.75, 
         horiz = TRUE)
     # lines(qcid,x[i,qcid],col=rgb(0,0,0,0.3),lwd=4) loe <- loess(x[i,qcid]~qcid)
     # points(numY,predict(loe,numY),type='l',col=rgb(0,0,0,0.3),lwd=4)
     
-    graphics::plot(numY, z[i, ], pch = 19, col = "yellow", ylab = c("Intensity"), xlab = c("Injection Order"), 
+    graphics::plot(numY, z[i, ], pch = 19, col = "gold2", ylab = c("Intensity"), xlab = c("Injection Order"), 
         main = "Corrected Peak")
     points(qcid, z[i, qcid], pch = 19, col = "blue")
     abline(h = cuttemUL, col = rgb(0, 0, 0, 0.3), lwd = 1.2, lty = 2)
@@ -71,7 +71,7 @@ loplot <- function(x, z, i) {
     
     # lines(qcid,z[i,qcid],col=rgb(0,0,0,0.3),lwd=4) loe_n <- loess(z[i,qcid]~qcid)
     # points(numY,predict(loe_n,numY),type='l',col=rgb(0,0,0,0.3),lwd=4)
-    legend("top", c("Sample", "QC"), col = c("yellow", "blue"), lty = 1, pch = 19, bty = "n", cex = 0.75, 
+    legend("top", c("Sample", "QC"), col = c("gold2", "blue"), lty = 1, pch = 19, bty = "n", cex = 0.75, 
         horiz = TRUE)
     dev.off()
 }
