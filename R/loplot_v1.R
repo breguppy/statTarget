@@ -29,14 +29,14 @@ loplot_rfsc <- function(x, z, i) {
     cuttemRUL <- meantemR + sdLineRL
     cuttemRDL <- meantemR - sdLineRL
     
-    
-    RSD30_CV = paste(rownames(x)[i], "_", i, ".pdf", sep = "")
+    RSD30_CV=paste(rownames(x)[i],"_", i,".png", sep="")
+    #RSD30_CV = paste(rownames(x)[i], "_", i, ".pdf", sep = "")
     dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep = "")
     if (!file.exists(dirout.loplot)){
       dir.create(dirout.loplot,showWarnings = FALSE)
     }
-    
-    pdf(paste(dirout.loplot, RSD30_CV, sep = "/"), width = 6, height = 6)
+    png(paste(dirout.loplot,RSD30_CV,sep="/"))
+    #pdf(paste(dirout.loplot, RSD30_CV, sep = "/"), width = 6, height = 6)
     graphics::layout(matrix(1:2, nrow = 2))
     
     numY <- 1:dim(x)[2]

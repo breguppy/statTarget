@@ -29,7 +29,7 @@ loplot_rlsc <- function(x,z,i){
          lty=1,pch= 19,bty="n", cex=0.75,horiz = TRUE)
   #lines(qcid,x[i,qcid],col=rgb(0,0,0,0.3),lwd=4)
   loe <- loess(x[i,qcid]~qcid)
-  points(numY,predict(loe,numY),type='l',col=rgb(0,0,0,0.3),lwd=4)
+  points(numY,predict(loe,numY),type='l',col=rgb(0,0,0,0.3),lwd=4, lty= "solid")
   
   graphics::plot(numY,z[i,],pch=19,col="gold2",ylab = c("Intensity"),
                  xlab = c("Injection Order"),main = "Corrected Peak")

@@ -360,7 +360,7 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     
     ############### dataCheck
     loessDatmp <- apply(loessDat, 2, function(x) as.numeric(as.character(x)))
-    loessDatT <- loessDatmp * 1000
+    loessDatT <- loessDatmp #* 1000
     rownames(loessDatT) <- rownames(dat)
     
     datmp <- apply(dat, 2, function(x) as.numeric(as.character(x)))
