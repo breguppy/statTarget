@@ -360,7 +360,7 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     
     ############### dataCheck
     loessDatmp <- apply(loessDat, 2, function(x) as.numeric(as.character(x)))
-    loessDatT <- loessDatmp * 1000
+    loessDatT <- loessDatmp #* 1000
     rownames(loessDatT) <- rownames(dat)
     
     datmp <- apply(dat, 2, function(x) as.numeric(as.character(x)))
@@ -402,11 +402,20 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
       
       cat("\n", "High-resolution images output...", "\n")
       pbloplot <- txtProgressBar(min = 1, max = dim(datmp)[1], style = 3)
-      for (i in 1:dim(datmp)[1]) {
-        loplot(datmp, loessDatT, i)
-        setTxtProgressBar(pbloplot, i)
+      if (MLmethod == "QCRFSC"){
+        for (i in 1:dim(datmp)[1]) {
+          loplot_rfsc(datmp, loessDatT, i)
+          setTxtProgressBar(pbloplot, i)
+        }
+        close(pbloplot)
       }
-      close(pbloplot)
+      if (MLmethod == "QCRLSC") {
+        for (i in 1:dim(datmp)[1]) {
+          loplot_rlsc(datmp, loessDatT, i)
+          setTxtProgressBar(pbloplot, i)
+        }
+        close(pbloplot)
+      }
     }
     
     ############### Raw output###########
