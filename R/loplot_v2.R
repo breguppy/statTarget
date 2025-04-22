@@ -18,27 +18,33 @@ loplot_rlsc <- function(x,z,i){
   dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep="")
   dir.create(dirout.loplot)
   
-  png(paste(dirout.loplot,RSD30_CV,sep="/"))
-  graphics::layout(matrix(1:2,nrow=2))
+  png(
+    filename = paste(dirout.loplot, RSD30_CV, sep = "/"),
+    width = 2100,
+    height = 2100,      
+    res = 300
+  )
+  graphics::layout(matrix(1:2, nrow = 2))
+  par(mar = c(5, 5, 4, 2) + 0.1)
   
   numY <- 1:dim(x)[2]
-  graphics::plot(numY,x[i,],pch=19,col="gold2",ylab = c("Intensity"),
+  graphics::plot(numY,x[i,],pch=19,col="#F5C710",ylab = c("Intensity"),
                  xlab = c("Injection Order"), main = "Raw Peak")
   points(qcid,x[i,qcid],pch=19,col="blue")
-  legend("top", c("Sample", "QC"),col=c('gold2', 'blue'),
+  legend("top", c("Sample", "QC"),col=c('#F5C710', 'blue'),
          lty=1,pch= 19,bty="n", cex=0.75,horiz = TRUE)
   #lines(qcid,x[i,qcid],col=rgb(0,0,0,0.3),lwd=4)
   loe <- loess(x[i,qcid]~qcid)
   points(numY,predict(loe,numY),type='l',col=rgb(0,0,0,0.3),lwd=4, lty= "solid")
   
-  graphics::plot(numY,z[i,],pch=19,col="gold2",ylab = c("Intensity"),
+  graphics::plot(numY,z[i,],pch=19,col="#F5C710",ylab = c("Intensity"),
                  xlab = c("Injection Order"),main = "Corrected Peak")
   points(qcid,z[i,qcid],pch=19,col="blue")
   #abline(h = 1, type='l',col=rgb(0,0,0,0.3),lwd=4)
   #lines(qcid,z[i,qcid],col=rgb(0,0,0,0.3),lwd=4)
   #loe_n <- loess(z[i,qcid]~qcid)
   #points(numY,predict(loe_n,numY),type='l',col=rgb(0,0,0,0.3),lwd=4)
-  legend("top", c("Sample", "QC"),col=c('gold2', 'blue'),
+  legend("top", c("Sample", "QC"),col=c('#F5C710', 'blue'),
          lty=1,pch= 19,bty="n", cex=0.75,horiz = TRUE)
   dev.off()
 }
