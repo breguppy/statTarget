@@ -12,6 +12,7 @@
 #' i.e. QC based random forest signal correction (QC-RFSC) and QC based LOESS signal 
 #' correction (QC-RLSC).
 #' @param ntree Number of trees to grow in random forest model.
+#' @param seed Seed for random forest model.
 #' @param QCspan The smoothing parameter for QC-RLSC which controls the bias-variance 
 #' trade off in QC-RLSC method if the QCspan is set at '0', the generalized 
 #' cross-validation will be performed to avoid overfitting the observed data.
@@ -32,7 +33,7 @@
 #' shiftCor(samPeno,samFile, MLmethod = 'QCRFSC', imputeM = 'KNN',coCV = 30)
 #' @keywords Quality Controls,Correction
 #' @export 
-shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree = 500, QCspan = 0, 
+shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree = 500, seed = NULL, QCspan = 0, 
     degree = 2, imputeM = "KNN", coCV = 30, plot = FALSE) {
     cat("\n")
     
@@ -237,9 +238,12 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     
     if (MLmethod == "QCRFSC") {
         # require(randomForest)
-        cat("\n", "The Signal Correction method was set at QC-RFSC", "\n")
+        cat("\n", "The Signal Correction method was set at QC-RFSC with seed ", seed, "\n")
         
-        REGfit = function(x, y, ntree = ntree) {
+        REGfit = function(x, y, ntree = ntree, seed) {
+            if (!is.null(seed)) {
+              set.seed(seed)
+            }
             cn <- colnames(x)
             x <- as.matrix(x)
             #### Check########
@@ -266,7 +270,7 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
             loessDat = x
             return(loessDat)
         }
-        loessDat <- REGfit(x = dat, y = numX, ntree = ntree)
+        loessDat <- REGfit(x = dat, y = numX, ntree = ntree, seed)
     }
     
     #################################################### 
@@ -521,8 +525,8 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     setwd(dirsc.ID)
     
     # parameter output
-    scPam1 <- c("Frule", "MLmethod", "ntree", "QCspan", "degree", "imputeM","coCV")
-    scPam2 <- c(Frule, MLmethod, ntree, QCspan, degree, imputeM, coCV)
+    scPam1 <- c("Frule", "MLmethod", "ntree", "seed", "QCspan", "degree", "imputeM","coCV")
+    scPam2 <- c(Frule, MLmethod, ntree, seed, QCspan, degree, imputeM, coCV)
     scpam <- data.frame(scPam1, scPam2)
     colnames(scpam) <- c("parameter", "value")
     par_sh = paste("statTarget/ParameterShiftCor", ".log", sep = "")
