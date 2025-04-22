@@ -5,15 +5,15 @@
 #' @param samPeno The file with the meta information including the sample name,
 #'  batches, class and order. 
 #' @param samFile The file with the expression information. 
-#' @param Frule Modified n precent rule function. A variable will be kept if it has a non-zero value
-#' for at least n precent of samples in any one group. 
+#' @param Frule Modified n percent rule function. A variable will be kept if it has a non-zero value
+#' for at least n percent of samples in any one group. 
 #' (Default: 0.8)  
 #' @param MLmethod The machine learning method for QC based signal correction. 
 #' i.e. QC based random forest signal correction (QC-RFSC) and QC based LOESS signal 
 #' correction (QC-RLSC).
 #' @param ntree Number of trees to grow in random forest model.
 #' @param QCspan The smoothing parameter for QC-RLSC which controls the bias-variance 
-#' tradeoff in QC-RLSC method if the QCspan is set at '0', the generalised 
+#' trade off in QC-RLSC method if the QCspan is set at '0', the generalized 
 #' cross-validation will be performed to avoid overfitting the observed data.
 #' @param degree Lets you specify local constant regression (i.e., the 
 #' Nadaraya-Watson estimator, degree=0), local linear regression (degree=1), 

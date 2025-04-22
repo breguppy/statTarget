@@ -1,5 +1,3 @@
-#devtools::load_all()
-#library("statTarget", lib.loc = "C:/Users/bguppy/Documents/statTarget")
 datpath <- "inst/extdata"
 samPeno <- paste(datpath,"MTBLS79_sampleList.csv", sep="/")
 samFile <- paste(datpath,"MTBLS79.csv", sep="/")

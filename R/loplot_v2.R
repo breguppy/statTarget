@@ -14,7 +14,8 @@ loplot_rlsc <- function(x,z,i){
   cn <- colnames(x)
   qcid <- grep("QC",cn)
   
-  RSD30_CV=paste(rownames(x)[i],"_", i,".png", sep="")
+  met_name <- gsub("[^[:alnum:]]", "_", rownames(x)[i])
+  RSD30_CV=paste(met_name,"_", i,".png", sep="")
   dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep="")
   dir.create(dirout.loplot)
   
