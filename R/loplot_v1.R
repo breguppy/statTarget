@@ -29,7 +29,8 @@ loplot_rfsc <- function(x, z, i) {
     cuttemRUL <- meantemR + sdLineRL
     cuttemRDL <- meantemR - sdLineRL
     
-    RSD30_CV=paste(rownames(x)[i],"_", i,".png", sep="")
+    met_name <- gsub("[^[:alnum:]]", "_", rownames(x)[i])
+    RSD30_CV=paste(met_name,"_", i,".png", sep="")
     #RSD30_CV = paste(rownames(x)[i], "_", i, ".pdf", sep = "")
     dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep = "")
     if (!file.exists(dirout.loplot)){
