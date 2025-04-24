@@ -19,6 +19,9 @@ RSDdist <- function(sample.rsd, sample.nor.rsd, QC.rsd, QC.nor.rsd) {
     q.rsd.down <- sum(colour2 == "#009E73") * 100/length(colour2)
     
     dirout.w = paste(getwd(), "/statTarget/shiftCor/RSDresult", sep = "")
+    if (!dir.exists(dirout.w)) {
+      dir.create(dirout.w, recursive = TRUE)
+    }
     
     pdf(file.path(dirout.w, "RSD variation.pdf"), width = 10, height = 7)
     layout(matrix(c(1, 2), ncol = 2))
