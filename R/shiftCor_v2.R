@@ -394,13 +394,21 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     }
     dirout.uni = paste(getwd(), "/statTarget/", sep = "")
     dirsc.ID = getwd()
-    dir.create(dirout.uni)
+    if (!dir.exists(dirout.uni)) {
+      dir.create(dirout.uni, recursive = TRUE)
+    }
     dirout.w = paste(getwd(), "/statTarget/shiftCor", sep = "")
-    dir.create(dirout.w)
+    if (!dir.exists(dirout.w)) {
+      dir.create(dirout.w, recursive = TRUE)
+    }
     dirout.Bs = paste(getwd(), "/statTarget/shiftCor/Before_shiftCor", sep = "")
-    dir.create(dirout.Bs)
+    if (!dir.exists(dirout.Bs)) {
+      dir.create(dirout.Bs, recursive = TRUE)
+    }
     dirout.As = paste(getwd(), "/statTarget/shiftCor/After_shiftCor", sep = "")
-    dir.create(dirout.As)
+    if (!dir.exists(dirout.As)) {
+      dir.create(dirout.As, recursive = TRUE)
+    }
     ########### Output images of each peak quality ############
     if(plot){
       
@@ -506,7 +514,7 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     lo_temp_all <- lo_temp[, -c(2, 4)]
     rownames(lo_temp_all) <- NULL
     
-    # fitler
+    # filter
     if(length(cfid) == 0) {
       lo_temp_all_filter <- lo_temp_all
     } else {

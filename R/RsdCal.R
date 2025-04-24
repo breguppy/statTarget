@@ -36,7 +36,9 @@ RsdCal = function(file, batch = TRUE, DistPattern = TRUE, output = TRUE) {
             write.csv(name, paste(dirout.g, outputfileg, sep = "/"), row.names = FALSE)
         }
         dirout.w = paste(getwd(), "/statTarget/shiftCor/RSDresult", sep = "")
-        dir.create(dirout.w)
+        if (!dir.exists(dirout.w)) {
+          dir.create(dirout.w, recursive = TRUE)
+        }
         NoF = nrow(g)
         nrow = dim(xr)[2] - 2
         batchQC <- matrix(rep(NA), ncol = NoF, nrow = nrow)
