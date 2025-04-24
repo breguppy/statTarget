@@ -486,8 +486,11 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     lo_temp_sam <- QC_temp[, -c(2, 4)]
     rownames(lo_temp_sam) <- NULL
     
-    # filter 
-    lo_temp_sam_filter <- lo_temp_sam[,-cfid]
+    # filter
+    if(length(cfid) == 0) {
+      lo_temp_sam_filter <- lo_temp_sam
+    } else {
+      lo_temp_sam_filter <- lo_temp_sam[,-cfid]}
     
     RSD30_CV = paste("shift_sample_cor", ".csv", sep = "")
     write.csv(lo_temp_sam_filter, paste(dirout.As, RSD30_CV, sep = "/"), row.names = FALSE)
@@ -504,7 +507,10 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     rownames(lo_temp_all) <- NULL
     
     # fitler
-    lo_temp_all_filter <- lo_temp_all[,-cfid]
+    if(length(cfid) == 0) {
+      lo_temp_all_filter <- lo_temp_all
+    } else {
+      lo_temp_all_filter <- lo_temp_all[,-cfid]}
     
     RSD30_CV = paste("shift_all_cor", ".csv", sep = "")
     write.csv(lo_temp_all_filter, paste(dirout.As, RSD30_CV, sep = "/"), row.names = FALSE)
