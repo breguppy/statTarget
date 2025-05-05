@@ -242,7 +242,10 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
         # require(randomForest)
         cat("\n", "The Signal Correction method was set at QC-RFSC with seed ", seed, "\n")
         
-        REGfit = function(x, y, ntree = ntree) {
+        REGfit = function(x, y, ntree = ntree, seed) {
+            if (!is.null(seed)) {
+              set.seed(seed)
+            }
             cn <- colnames(x)
             x <- as.matrix(x)
             #### Check########
@@ -269,7 +272,7 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
             loessDat = x
             return(loessDat)
         }
-        loessDat <- REGfit(x = dat, y = numX, ntree = ntree)
+        loessDat <- REGfit(x = dat, y = numX, ntree = ntree, seed)
     }
     
     #################################################### 
