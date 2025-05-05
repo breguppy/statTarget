@@ -4,29 +4,43 @@
 #' @param x the file before QC-RLS correction.
 #' @param z the file after QC-RLS correction.
 #' @param i a index for the name of variable.
-#' @usage loplot(x,z,i)
+#' @param fig_type either png or pdf. Defaults to pdf in shiftCor_v2.
+#' @usage loplot(x,z,i,fig_type = 'pdf')
 #' @export
 #' @references statTarget: a streamlined tool for signal drift correction
 #' and interpretations of quantitative mass spectrometry-based omics data.
 #' Luan H, Ji F, Chen Y, Cai Z. 2018, Analytica Chimica Acta.
-loplot_rlsc <- function(x,z,i){
+loplot_rlsc <- function(x,z,i, fig_type){
   # x is the loess
   cn <- colnames(x)
   qcid <- grep("QC",cn)
   
   met_name <- gsub("[^[:alnum:]]", "_", rownames(x)[i])
-  RSD30_CV=paste(met_name,"_", i,".png", sep="")
-  dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep="")
-  dir.create(dirout.loplot)
-  
-  png(
-    filename = paste(dirout.loplot, RSD30_CV, sep = "/"),
-    width = 2100,
-    height = 2100,      
-    res = 300
-  )
-  graphics::layout(matrix(1:2, nrow = 2))
-  par(mar = c(5, 5, 4, 2) + 0.1)
+  if (fig_type == 'png'){
+    RSD30_CV=paste(met_name,"_", i,".png", sep="")
+    dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep = "")
+    if (!file.exists(dirout.loplot)){
+      dir.create(dirout.loplot,showWarnings = FALSE)
+    }
+    png(
+      filename = paste(dirout.loplot, RSD30_CV, sep = "/"),
+      width = 2100,
+      height = 2100,      
+      res = 300
+    )
+    graphics::layout(matrix(1:2, nrow = 2))
+    par(mar = c(5, 5, 4, 2) + 0.1)
+  }
+  if (fig_type == 'pdf') {
+    RSD30_CV = paste(met_name, "_", i, ".pdf", sep = "")
+    dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep = "")
+    if (!file.exists(dirout.loplot)){
+      dir.create(dirout.loplot,showWarnings = FALSE)
+    }
+    
+    pdf(paste(dirout.loplot, RSD30_CV, sep = "/"), width = 6, height = 6)
+    graphics::layout(matrix(1:2, nrow = 2))
+  }
   
   numY <- 1:dim(x)[2]
   graphics::plot(numY,x[i,],pch=19,col="#F5C710",ylab = c("Intensity"),
