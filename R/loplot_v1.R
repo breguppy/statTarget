@@ -1,7 +1,7 @@
 ### Loplot, a visible figure of signal correction loplot provide the visible figure of QC-based
 ### correction.  x The file before QC-based correction.  z The file after QC-based correction.  i
 ### The name of variable.  The plot of RSD distribution and data table.
-loplot_rfsc <- function(x, z, i) {
+loplot_rfsc <- function(x, z, i, fig_type = 'pdf') {
     # x is the Corrected Data
     cn <- colnames(x)
     qcid <- grep("QC", cn)
@@ -30,20 +30,32 @@ loplot_rfsc <- function(x, z, i) {
     cuttemRDL <- meantemR - sdLineRL
     
     met_name <- gsub("[^[:alnum:]]", "_", rownames(x)[i])
-    RSD30_CV=paste(met_name,"_", i,".png", sep="")
-    #RSD30_CV = paste(rownames(x)[i], "_", i, ".pdf", sep = "")
-    dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep = "")
-    if (!file.exists(dirout.loplot)){
-      dir.create(dirout.loplot,showWarnings = FALSE)
+    
+    if (fig_type == 'png'){
+      RSD30_CV=paste(met_name,"_", i,".png", sep="")
+      dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep = "")
+      if (!file.exists(dirout.loplot)){
+        dir.create(dirout.loplot,showWarnings = FALSE)
+      }
+      png(
+        filename = paste(dirout.loplot, RSD30_CV, sep = "/"),
+        width = 2100,
+        height = 2100,      
+        res = 300
+      )
+      graphics::layout(matrix(1:2, nrow = 2))
+      par(mar = c(5, 5, 4, 2) + 0.1)
     }
-    png(
-      filename = paste(dirout.loplot, RSD30_CV, sep = "/"),
-      width = 2100,
-      height = 2100,      
-      res = 300
-    )
-    graphics::layout(matrix(1:2, nrow = 2))
-    par(mar = c(5, 5, 4, 2) + 0.1)
+    if (fig_type == 'pdf') {
+      RSD30_CV = paste(met_name, "_", i, ".pdf", sep = "")
+      dirout.loplot <- paste(getwd(), "/statTarget/shiftCor/After_shiftCor/loplot", sep = "")
+      if (!file.exists(dirout.loplot)){
+        dir.create(dirout.loplot,showWarnings = FALSE)
+      }
+      
+      pdf(paste(dirout.loplot, RSD30_CV, sep = "/"), width = 6, height = 6)
+      graphics::layout(matrix(1:2, nrow = 2))
+    }
     
     numY <- 1:dim(x)[2]
     graphics::plot(numY, x[i, ], pch = 19, col = "#F5C710", ylab = c("Intensity"), xlab = c("Injection Order"), 

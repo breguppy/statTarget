@@ -25,6 +25,7 @@
 #' @param coCV Define the cutoff value (0-100) of CV for controlling the number of features.
 #' @param plot Defines if images of feature quality should be generated (TRUE) or not (FALSE). 
 #' Defaults to FALSE.
+#' @param fig_type The png or pdf extention for the figure. Defaults to pdf.
 #' @return the shiftCor files. See the details at https://stattarget.github.io
 #' @examples 
 #' datpath <- system.file('extdata',package = 'statTarget')
@@ -34,7 +35,7 @@
 #' @keywords Quality Controls,Correction
 #' @export 
 shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree = 500, seed = NULL, QCspan = 0, 
-    degree = 2, imputeM = "KNN", coCV = 30, plot = FALSE) {
+    degree = 2, imputeM = "KNN", coCV = 30, plot = FALSE, fig_type = 'pdf') {
     cat("\n")
     
     
@@ -416,14 +417,14 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
       pbloplot <- txtProgressBar(min = 1, max = dim(datmp)[1], style = 3)
       if (MLmethod == "QCRFSC"){
         for (i in 1:dim(datmp)[1]) {
-          loplot_rfsc(datmp, loessDatT, i)
+          loplot_rfsc(datmp, loessDatT, i, fig_type)
           setTxtProgressBar(pbloplot, i)
         }
         close(pbloplot)
       }
       if (MLmethod == "QCRLSC") {
         for (i in 1:dim(datmp)[1]) {
-          loplot_rlsc(datmp, loessDatT, i)
+          loplot_rlsc(datmp, loessDatT, i, fig_type)
           setTxtProgressBar(pbloplot, i)
         }
         close(pbloplot)
