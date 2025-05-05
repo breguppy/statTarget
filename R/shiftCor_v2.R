@@ -12,7 +12,8 @@
 #' i.e. QC based random forest signal correction (QC-RFSC) and QC based LOESS signal 
 #' correction (QC-RLSC).
 #' @param ntree Number of trees to grow in random forest model.
-#' @param seed Seed for random forest model.
+#' @param seed Seed value set before function call. For reproducible results set seed before calling 
+#' function. Default value is NULL. 
 #' @param QCspan The smoothing parameter for QC-RLSC which controls the bias-variance 
 #' trade off in QC-RLSC method if the QCspan is set at '0', the generalized 
 #' cross-validation will be performed to avoid overfitting the observed data.
@@ -241,10 +242,7 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
         # require(randomForest)
         cat("\n", "The Signal Correction method was set at QC-RFSC with seed ", seed, "\n")
         
-        REGfit = function(x, y, ntree = ntree, seed) {
-            if (!is.null(seed)) {
-              set.seed(seed)
-            }
+        REGfit = function(x, y, ntree = ntree) {
             cn <- colnames(x)
             x <- as.matrix(x)
             #### Check########
@@ -271,7 +269,7 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
             loessDat = x
             return(loessDat)
         }
-        loessDat <- REGfit(x = dat, y = numX, ntree = ntree, seed)
+        loessDat <- REGfit(x = dat, y = numX, ntree = ntree)
     }
     
     #################################################### 
