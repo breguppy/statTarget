@@ -27,6 +27,8 @@
 #' @param plot Defines if images of feature quality should be generated (TRUE) or not (FALSE). 
 #' Defaults to FALSE.
 #' @param fig_type The png or pdf extention for the figure. Defaults to pdf.
+#' @param batch_wise Defines if the correction is applied batch_wise (TRUE) or to the whole 
+#' run (FALSE)
 #' @return the shiftCor files. See the details at https://stattarget.github.io
 #' @examples 
 #' datpath <- system.file('extdata',package = 'statTarget')
@@ -35,8 +37,9 @@
 #' shiftCor(samPeno,samFile, MLmethod = 'QCRFSC', imputeM = 'KNN',coCV = 30)
 #' @keywords Quality Controls,Correction
 #' @export 
-shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree = 500, seed = NULL, QCspan = 0, 
-    degree = 2, imputeM = "KNN", coCV = 30, plot = FALSE, fig_type = 'pdf') {
+shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree = 500, seed = NULL, 
+                     QCspan = 0, degree = 2, imputeM = "KNN", coCV = 30, plot = FALSE, 
+                     fig_type = 'pdf', batch_wise = FALSE) {
     cat("\n")
     
     
@@ -237,132 +240,169 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
     dat <- as.matrix(t(inputedData))
     numX <- 1:dim(dat)[2]
     
-    
-    if (MLmethod == "QCRFSC") {
-        # require(randomForest)
+    correct_signal <- function(dat, MLmethod, numX, ntree, seed, QCspan, degree) {
+      # --- Sanity Check ---
+      qc_cols <- grep("^QC", colnames(dat))
+      
+      if (length(qc_cols) < 3) {
+        stop("Too few QC samples in this batch: at least 3 are required for reliable LOESS/RF correction.")
+      }
+      
+      if (any(apply(dat[, qc_cols, drop = FALSE], 1, function(row) sum(is.na(row)) >= length(row) - 1))) {
+        stop("Insufficient valid QC data for one or more features in this batch.")
+      }
+      
+      if (MLmethod == "QCRFSC") {
         cat("\n", "The Signal Correction method was set at QC-RFSC with seed ", seed, "\n")
         
         REGfit = function(x, y, ntree = ntree, seed) {
-            if (!is.null(seed)) {
-              set.seed(seed)
-            }
+          if (!is.null(seed)) {
+            set.seed(seed)
+          }
+          cn <- colnames(x)
+          x <- as.matrix(x)
+          #### Check########
+          st_QC <- grep("QC", cn[1])
+          ed_QC <- grep("QC", cn[length(cn)])
+          if (length(st_QC) == 0) {
+            stop("\nWrong: the first sample must be QC sample; please check ......")
+          }
+          if (length(ed_QC) == 0) {
+            stop("\nWrong: the sample at the end of sequence must be QC sample; 
+          please check ......")
+          }
+          qcid <- grep("QC", cn)
+          pb <- txtProgressBar(min = 1, max = dim(x)[1], style = 3)
+          for (i in 1:dim(x)[1]) {
+            temp <- randomForest(data.frame(qcid), as.numeric(x[i, qcid]), ntree = ntree)
+            y <- data.frame(y)
+            colnames(y) <- "qcid"
+            rfP <- predict(temp, y)
+            x[i, ] <- as.numeric(x[i, ])/rfP
+            setTxtProgressBar(pb, i)
+          }
+          close(pb)
+          loessDat = x
+          return(loessDat)
+        }
+        
+        return(REGfit(x = dat, y = numX, ntree = ntree, seed = seed))
+      } else if (MLmethod == "QCRLSC") {
+        cat("\n", "The Signal Correction method was set at QCRLSC, QCspan:", QCspan, "\n")
+        
+        if (QCspan > 0) {
+          loessFit = function(x, y, QCspan, degree) {
             cn <- colnames(x)
-            x <- as.matrix(x)
             #### Check########
             st_QC <- grep("QC", cn[1])
             ed_QC <- grep("QC", cn[length(cn)])
             if (length(st_QC) == 0) {
-                stop("\nWrong: the first sample must be QC sample; please check ......")
+              stop("the first sample must be QC sample; please check ......")
             }
             if (length(ed_QC) == 0) {
-                stop("\nWrong: the sample at the end of sequence must be QC sample; 
+              stop("the sample at the end of sequence must be QC sample; 
           please check ......")
             }
             qcid <- grep("QC", cn)
+            
             pb <- txtProgressBar(min = 1, max = dim(x)[1], style = 3)
+            
             for (i in 1:dim(x)[1]) {
-                temp <- randomForest(data.frame(qcid), as.numeric(x[i, qcid]), ntree = ntree)
-                y <- data.frame(y)
-                colnames(y) <- "qcid"
-                rfP <- predict(temp, y)
-                x[i, ] <- as.numeric(x[i, ])/rfP
-                setTxtProgressBar(pb, i)
+              loe <- stats::loess(x[i, qcid] ~ qcid, span = QCspan, degree = degree)
+              yf <- stats::predict(loe, y)
+              x[i, ] <- as.numeric(x[i, ])/yf
+              setTxtProgressBar(pb, i)
             }
             close(pb)
             loessDat = x
             return(loessDat)
+          }
+          
+          return(loessFit(x = dat, y = numX, QCspan = QCspan, degree = degree))
+        } else {
+          cat("\n", "Warning: The QCspan was set at '0'.")
+          message("\n", " The GCV was used to avoid overfitting the observed data")
+          autoFit <- function(xl, y) {
+            cn <- colnames(xl)
+            #### Check########
+            st_QC <- grep("QC", cn[1])
+            ed_QC <- grep("QC", cn[length(cn)])
+            if (length(st_QC) == 0) {
+              stop("the first sample must be QC sample; please check ......")
+            }
+            if (length(ed_QC) == 0) {
+              stop("the sample at the end of sequence must be QC sample; 
+          please check ......")
+            }
+            qcid <- grep("QC", cn)
+            pb <- txtProgressBar(min = 1, max = dim(xl)[1], style = 3)
+            
+            for (i in 1:dim(xl)[1]) {
+              
+              Sys.sleep(1e-06)
+              
+              loe1 <- loess(xl[i, qcid] ~ qcid)
+              # loe2 <- loe1
+              env <- environment()
+              sploe <- function(sp) {
+                loe2 <- get("loe1", envir = env)
+                mod <- stats::update(loe2, span = sp)
+                CVspan = loessGCV(mod)[["gcv"]]
+              }
+              sp <- c(seq(0.5, 0.75, 0.01))
+              CVspan = as.matrix(lapply(sp, sploe))
+              CVspan[!is.finite(as.numeric(CVspan))] <- NA
+              minG <- data.frame(sp, CVspan)
+              minspan <- minG[which.min(minG[, 2]), 1]
+              minspan
+              # sp <- c(seq(0.05,0.75,0.01)) CVspan <-c() for(j in 1:length(sp)){ mod <- stats::update(loe1,
+              # span = sp[j]) CVspan[j] = loessGCV(mod)[['gcv']] } minG <- as.matrix(data.frame(sp,CVspan))
+              # minG[!is.finite(minG)] <- max(minG[,2],na.rm = TRUE) minspan <- minG[which.min(minG[,2]),1]
+              # minspan
+              loeN <- stats::update(loe1, span = minspan)
+              yf <- predict(loeN, y)
+              xl[i, ] <- as.numeric(xl[i, ])/yf
+              setTxtProgressBar(pb, i)
+            }
+            close(pb)
+            loessDat = xl
+            return(loessDat)
+          }
+          
+          return(autoFit(xl = dat, y = numX))
         }
-        loessDat <- REGfit(x = dat, y = numX, ntree = ntree, seed)
+      }
     }
     
+    if (batch_wise) {
+      cat("\nRunning batch-wise correction...\n")
+      batch_vec <- samPeno$batch
+      batch_levels <- unique(batch_vec)
+      corrected_list <- list()
+      
+      for (b in batch_levels) {
+        cat("  Processing batch:", b, "\n")
+        samples_in_batch <- samPeno$sample[samPeno$batch == b]
+        batch_cols <- which(colnames(dat) %in% samples_in_batch)
+        
+        if (length(batch_cols) < 3) {
+          warning(paste("Batch", b, "has fewer than 3 samples. Skipping."))
+          next
+        }
+        
+        dat_sub <- dat[, batch_cols, drop = FALSE]
+        corrected_sub <- correct_signal(dat_sub, MLmethod, 1:ncol(dat_sub), ntree, seed, QCspan, degree)
+        corrected_list[[b]] <- corrected_sub
+      }
+      
+      # Recombine corrected batches by column
+      loessDat <- do.call(cbind, corrected_list)[, colnames(dat)]  # ensure correct sample order
+    } else {
+      loessDat <- correct_signal(dat, MLmethod, numX, ntree, seed, QCspan, degree)
+    }
     #################################################### 
     
     
-    if (MLmethod == "QCRLSC") {
-        cat("\n", "The Signal Correction method was set at QCRLSC, QCspan:", QCspan, "\n")
-        
-        if (QCspan > 0) {
-            
-            loessFit = function(x, y, QCspan, degree) {
-                cn <- colnames(x)
-                #### Check########
-                st_QC <- grep("QC", cn[1])
-                ed_QC <- grep("QC", cn[length(cn)])
-                if (length(st_QC) == 0) {
-                  stop("the first sample must be QC sample; please check ......")
-                }
-                if (length(ed_QC) == 0) {
-                  stop("the sample at the end of sequence must be QC sample; 
-          please check ......")
-                }
-                qcid <- grep("QC", cn)
-                
-                pb <- txtProgressBar(min = 1, max = dim(x)[1], style = 3)
-                
-                for (i in 1:dim(x)[1]) {
-                  loe <- stats::loess(x[i, qcid] ~ qcid, span = QCspan, degree = degree)
-                  yf <- stats::predict(loe, y)
-                  x[i, ] <- as.numeric(x[i, ])/yf
-                  setTxtProgressBar(pb, i)
-                }
-                close(pb)
-                loessDat = x
-                return(loessDat)
-            }
-            loessDat <- loessFit(x = dat, y = numX, QCspan = QCspan, degree = degree)
-        } else if (QCspan <= 0) {
-            cat("\n", "Warning: The QCspan was set at '0'.")
-            message("\n", " The GCV was used to avoid overfitting the observed data")
-            autoFit <- function(xl, y) {
-                cn <- colnames(xl)
-                #### Check########
-                st_QC <- grep("QC", cn[1])
-                ed_QC <- grep("QC", cn[length(cn)])
-                if (length(st_QC) == 0) {
-                  stop("the first sample must be QC sample; please check ......")
-                }
-                if (length(ed_QC) == 0) {
-                  stop("the sample at the end of sequence must be QC sample; 
-          please check ......")
-                }
-                qcid <- grep("QC", cn)
-                pb <- txtProgressBar(min = 1, max = dim(xl)[1], style = 3)
-                
-                for (i in 1:dim(xl)[1]) {
-                  
-                  Sys.sleep(1e-06)
-                  
-                  loe1 <- loess(xl[i, qcid] ~ qcid)
-                  # loe2 <- loe1
-                  env <- environment()
-                  sploe <- function(sp) {
-                    loe2 <- get("loe1", envir = env)
-                    mod <- stats::update(loe2, span = sp)
-                    CVspan = loessGCV(mod)[["gcv"]]
-                  }
-                  sp <- c(seq(0.5, 0.75, 0.01))
-                  CVspan = as.matrix(lapply(sp, sploe))
-                  CVspan[!is.finite(as.numeric(CVspan))] <- NA
-                  minG <- data.frame(sp, CVspan)
-                  minspan <- minG[which.min(minG[, 2]), 1]
-                  minspan
-                  # sp <- c(seq(0.05,0.75,0.01)) CVspan <-c() for(j in 1:length(sp)){ mod <- stats::update(loe1,
-                  # span = sp[j]) CVspan[j] = loessGCV(mod)[['gcv']] } minG <- as.matrix(data.frame(sp,CVspan))
-                  # minG[!is.finite(minG)] <- max(minG[,2],na.rm = TRUE) minspan <- minG[which.min(minG[,2]),1]
-                  # minspan
-                  loeN <- stats::update(loe1, span = minspan)
-                  yf <- predict(loeN, y)
-                  xl[i, ] <- as.numeric(xl[i, ])/yf
-                  setTxtProgressBar(pb, i)
-                }
-                close(pb)
-                loessDat = xl
-                return(loessDat)
-            }
-            loessDat <- autoFit(xl = dat, y = numX)
-        }
-        
-    }
     
     ############### dataCheck
     loessDatmp <- apply(loessDat, 2, function(x) as.numeric(as.character(x)))
