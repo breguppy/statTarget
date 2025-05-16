@@ -1,88 +1,92 @@
-#' @title Loplot
-#' @description Loplot, a visible figure of signal correction loplot
-#' provide the visible figure of QC-based correction. See the details at the following References.
-#' @param x the file before QC-RLS correction.
-#' @param z the file after QC-RLS correction.
-#' @param i a index for the name of variable.
-#' @param fig_type either png or pdf. Defaults to pdf in shiftCor_v2.
-#' @usage loplot(x,z,i,fig_type = 'pdf')
+#' @title Loplot (batch-aware)
+#' @description Visible QC-based LOESS correction plots, with an option for batch-wise smoothing.
+#' @param x          matrix of raw intensities (features × injections)
+#' @param z          matrix of corrected intensities (features × injections)
+#' @param i          row index of the feature to plot
+#' @param fig_type   either "png" or "pdf"
+#' @param batch_wise logical; if TRUE, draw one grey LOESS curve per batch
+#' @param batch      vector (length = ncol(x)) of batch labels for each injection
 #' @export
-#' @references statTarget: a streamlined tool for signal drift correction
-#' and interpretations of quantitative mass spectrometry-based omics data.
-#' Luan H, Ji F, Chen Y, Cai Z. 2018, Analytica Chimica Acta.
-loplot_rlsc <- function(x, z, i, fig_type = 'pdf',
+loplot_rlsc <- function(x, z, i,
+                        fig_type   = 'pdf',
                         batch_wise = FALSE,
-                        batch = NULL) {
-  # - x, z: numeric matrices [features × injections]
-  # - batch_wise: whether to do per-batch smoothing
-  # - batch: a factor or character vector, length = ncol(x), giving each injection's batch
-  
-  # … all of your device + layout code stays the same …
-  
-  # pick up our batch info
+                        batch      = NULL) {
+  # sanity check
   if (batch_wise) {
     if (is.null(batch) || length(batch) != ncol(x))
-      stop("You must supply a `batch` vector of length ncol(x).")
+      stop("When batch_wise=TRUE you must supply a ‘batch’ vector of length ncol(x).")
     batches <- unique(batch)
-    palette <- scales::hue_pal()(length(batches))
+  }
+  
+  # set up output folder
+  met_name <- gsub("[^[:alnum:]]", "_", rownames(x)[i])
+  out_dir  <- file.path(getwd(),
+                        "statTarget/shiftCor/After_shiftCor/loplot")
+  if (!dir.exists(out_dir)) dir.create(out_dir, recursive=TRUE)
+  
+  # open device
+  filename <- file.path(out_dir,
+                        paste0(met_name, "_", i,
+                               if (fig_type=="png") ".png" else ".pdf"))
+  if (fig_type == 'png') {
+    png(filename, width=2100, height=2100, res=300)
+    par(mar = c(5,5,4,2) + 0.1)
+    layout(matrix(1:2, nrow=2))
+  } else {
+    pdf(filename, width=6, height=6)
+    layout(matrix(1:2, nrow=2))
   }
   
   numY <- seq_len(ncol(x))
   qcid <- grep("QC", colnames(x))
   
-  ##### RAW PANEL #####
+  #### RAW PANEL ####
   plot(numY, x[i,], pch=19, col="#F5C710",
        ylab="Intensity", xlab="Injection Order", main="Raw Peak")
   points(qcid, x[i, qcid], pch=19, col="blue")
   
   if (!batch_wise) {
+    # single global grey LOESS
     loe <- loess(x[i, qcid] ~ qcid)
-    lines(numY, predict(loe, numY), col=rgb(0,0,0,0.3), lwd=4)
-    legend("top", c("Sample","QC"), col=c("#F5C710","blue"),
-           pch=19, bty="n", cex=0.75, horiz=TRUE)
+    lines(numY, predict(loe, numY),
+          col=rgb(0,0,0,0.3), lwd=4)
   } else {
-    legend_labels <- c("QC")
-    legend_cols   <- "blue"
-    for (j in seq_along(batches)) {
-      idx   <- which(batch == batches[j])
-      qc_b  <- intersect(qcid, idx)
+    # one grey LOESS curve per batch
+    for (b in batches) {
+      idx  <- which(batch == b)
+      qc_b <- intersect(qcid, idx)
       if (length(qc_b) < 5) next
       loe_b <- loess(x[i, qc_b] ~ qc_b)
-      lines(qc_b, predict(loe_b, qc_b), col=palette[j], lwd=2)
-      legend_labels <- c(legend_labels, paste0("Batch ", batches[j]))
-      legend_cols   <- c(legend_cols, palette[j])
+      lines(qc_b, predict(loe_b, qc_b),
+            col=rgb(0,0,0,0.3), lwd=4)
     }
-    legend("topright", legend_labels, col=legend_cols,
-           pch=c(19, rep(NA, length(batches))), lty=c(NA, rep(1, length(batches))),
-           bty="n", cex=0.7)
   }
   
-  ##### CORRECTED PANEL #####
+  legend("top", c("Sample","QC"), col=c("#F5C710","blue"),
+         pch=19, bty="n", cex=0.75, horiz=TRUE)
+  
+  #### CORRECTED PANEL ####
   plot(numY, z[i,], pch=19, col="#F5C710",
        ylab="Intensity", xlab="Injection Order", main="Corrected Peak")
   points(qcid, z[i, qcid], pch=19, col="blue")
   
   if (!batch_wise) {
     loe_n <- loess(z[i, qcid] ~ qcid)
-    lines(numY, predict(loe_n, numY), col=rgb(0,0,0,0.3), lwd=4)
-    legend("top", c("Sample","QC"), col=c("#F5C710","blue"),
-           pch=19, bty="n", cex=0.75, horiz=TRUE)
+    lines(numY, predict(loe_n, numY),
+          col=rgb(0,0,0,0.3), lwd=4)
   } else {
-    legend_labels <- c("QC")
-    legend_cols   <- "blue"
-    for (j in seq_along(batches)) {
-      idx   <- which(batch == batches[j])
+    for (b in batches) {
+      idx   <- which(batch == b)
       qc_b  <- intersect(qcid, idx)
       if (length(qc_b) < 5) next
       loe_bc <- loess(z[i, qc_b] ~ qc_b)
-      lines(qc_b, predict(loe_bc, qc_b), col=palette[j], lwd=2, lty=2)
-      legend_labels <- c(legend_labels, paste0("Batch ", batches[j]))
-      legend_cols   <- c(legend_cols, palette[j])
+      lines(qc_b, predict(loe_bc, qc_b),
+            col=rgb(0,0,0,0.3), lwd=4)
     }
-    legend("topright", legend_labels, col=legend_cols,
-           pch=c(19, rep(NA, length(batches))), lty=c(NA, rep(2, length(batches))),
-           bty="n", cex=0.7)
   }
+  
+  legend("top", c("Sample","QC"), col=c("#F5C710","blue"),
+         pch=19, bty="n", cex=0.75, horiz=TRUE)
   
   dev.off()
 }
