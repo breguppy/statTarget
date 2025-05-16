@@ -465,7 +465,9 @@ shiftCor <- function(samPeno, samFile, Frule = 0.8, MLmethod = "QCRFSC", ntree =
       }
       if (MLmethod == "QCRLSC") {
         for (i in 1:dim(datmp)[1]) {
-          loplot_rlsc(datmp, loessDatT, i, fig_type)
+          loplot_rlsc(datmp, loessDatT, i, fig_type,
+                      batch_wise = batch_wise,
+                      batch       = if (batch_wise) samPeno$batch else NULL)
           setTxtProgressBar(pbloplot, i)
         }
         close(pbloplot)
