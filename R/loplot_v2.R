@@ -55,7 +55,7 @@ loplot_rlsc <- function(x, z, i,
     for (b in batches) {
       idx  <- which(batch == b)
       qc_b <- intersect(qcid, idx)
-      if (length(qc_b) < 5) next
+      if (length(qc_b) < 3) next
       loe_b <- loess(x[i, qc_b] ~ qc_b)
       lines(qc_b, predict(loe_b, qc_b),
             col=rgb(0,0,0,0.3), lwd=4)
